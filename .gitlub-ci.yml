@@ -1,0 +1,52 @@
+# Указываем используемую версию синтаксиса для CI/CD
+stages:
+  - build
+  - test
+  - deploy
+
+# Определение переменных окружения
+variables:
+  dst_path: # прописываем нужный путь
+  NODE_VERSION: '14' # Версия Node.js, которую будем использовать
+  service: # если есть - прописываем сервис
+
+# Настройка работы стадии "Build" (сборка)
+build:
+  stage: build
+  image:
+    name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:18.16.0-alpine3.17 # Используем образ с нужной версией Node.js
+    entrypoint: ['']
+  tags:
+    - CI tag
+  before_script:
+    - npm list --global http-server || npm install --global http-server
+  script:
+    - npm install # Установка зависимостей
+    - npm run build # Сборка проекта
+
+# Настройка работы стадии "Test" (тестирование)
+test:
+  stage: test
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:18.16.0-alpine3.17 # Используем образ с нужной версией Node.js
+  script:
+    - npm install # Установка зависимостей
+    - npm run test # Запуск тестов
+
+# Настройка работы стадии "Deploy" (выкладка артефактов)
+deploy:
+  stage: deploy
+  image: node:18.16.0-alpine3.17 # Используем образ с нужной версией Node.js
+  script:
+    - npm install # Установка зависимостей
+    - npm run build # Сборка проекта
+    - mkdir public # Создаем папку для артефактов
+    - cp -r dist/* public/ # Копируем собранные файлы в папку "public"
+  artifacts:
+    paths:
+      - public/ # Задаем путь к артефактам, которые нужно сохранить
+
+# В этом примере у нас три стадии: "build", "test" и "deploy".
+# На каждой стадии мы используем образ с нужной версией Node.js,
+# устанавливаем зависимости и выполняем соответствующие действия:
+# сборку проекта, запуск тестов и выкладку артефактов в папку "public".
+# Артефакты сохраняются и доступны для скачивания после успешного выполнения пайплайна.
